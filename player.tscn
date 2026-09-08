@@ -38,7 +38,8 @@ roughness = 0.4
 
 [node name="Player" type="CharacterBody3D" unique_id=77038591]
 collision_layer = 2
-floor_snap_length = 0.25
+floor_snap_length = 0.4
+floor_max_angle = 1.047198
 script = ExtResource("1_player")
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1972382180]

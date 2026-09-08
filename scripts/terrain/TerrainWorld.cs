@@ -347,6 +347,14 @@ public partial class TerrainWorld : Node3D
             material.Shader = GD.Load<Shader>("res://shaders/terrain_cutaway.gdshader");
         }
 
+        if (material.NextPass is not ShaderMaterial)
+        {
+            material.NextPass = new ShaderMaterial
+            {
+                Shader = GD.Load<Shader>("res://shaders/terrain_cutaway_ghost.gdshader")
+            };
+        }
+
         return material;
     }
 
@@ -365,9 +373,20 @@ public partial class TerrainWorld : Node3D
             return;
         }
 
-        _material.SetShaderParameter("cut_center", center);
-        _material.SetShaderParameter("cut_axis", axis.Normalized());
-        _material.SetShaderParameter("cut_floor_y", feet.Y);
+        ApplyCutaway(_material, center, axis.Normalized(), feet.Y);
+        if (_material.NextPass is ShaderMaterial ghost)
+        {
+            ApplyCutaway(ghost, center, axis.Normalized(), feet.Y);
+            ghost.SetShaderParameter("cut_radius", _material.GetShaderParameter("cut_radius"));
+            ghost.SetShaderParameter("cut_softness", _material.GetShaderParameter("cut_softness"));
+        }
+    }
+
+    private static void ApplyCutaway(ShaderMaterial material, Vector3 center, Vector3 axis, float floorY)
+    {
+        material.SetShaderParameter("cut_center", center);
+        material.SetShaderParameter("cut_axis", axis);
+        material.SetShaderParameter("cut_floor_y", floorY);
     }
 
     private void AddWalkFloor()
