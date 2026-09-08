@@ -11,7 +11,8 @@ public partial class TerrainWorld : Node3D
     [Export] public float NoiseFrequency { get; set; } = 0.28f;
     [Export] public float NoiseAmplitude { get; set; } = 0.95f;
     [Export] public float CrustHeight { get; set; } = 5f;
-    [Export] public float MinThickness { get; set; } = 0.4f;
+    [Export] public float FloorThickness { get; set; } = 0.45f;
+    [Export] public float CeilingThickness { get; set; } = 0.55f;
     [Export] public Color TerrainColor { get; set; } = new(0.55f, 0.45f, 0.32f);
 
     private readonly Dictionary<(int X, int Z), TerrainChunk> _chunks = [];
@@ -21,12 +22,19 @@ public partial class TerrainWorld : Node3D
 
     public override void _Ready()
     {
-        _sampler = new SdfSampler(NoiseSeed, NoiseFrequency, NoiseAmplitude, CrustHeight, MinThickness);
+        _sampler = new SdfSampler(
+            NoiseSeed,
+            NoiseFrequency,
+            NoiseAmplitude,
+            CrustHeight,
+            FloorThickness,
+            CeilingThickness);
         _material = new StandardMaterial3D
         {
             AlbedoColor = TerrainColor,
-            Roughness = 0.92f,
-            Metallic = 0f
+            Roughness = 0.85f,
+            Metallic = 0f,
+            DisableReceiveShadows = false
         };
         _bounds = new Aabb(Vector3.Zero, Vector3.Zero);
         EnsureChunk(0, 0);
@@ -43,7 +51,7 @@ public partial class TerrainWorld : Node3D
         {
             if (chunk.OverlapsBrush(worldPoint, radius))
             {
-                chunk.SubtractSphere(worldPoint, radius);
+                chunk.SubtractColumn(worldPoint, radius);
             }
         }
     }

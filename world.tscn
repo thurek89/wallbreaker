@@ -3,13 +3,14 @@
 [ext_resource type="Script" uid="uid://d4es1kikx8tae" path="res://scripts/CameraController.cs" id="1_cam"]
 [ext_resource type="Script" uid="uid://d3ohpftqp28sg" path="res://scripts/terrain/TerrainWorld.cs" id="2_terrain"]
 [ext_resource type="Script" uid="uid://dkes3lvjugcc6" path="res://scripts/DebugDigController.cs" id="3_dig"]
+[ext_resource type="Script" uid="uid://cjghqkpyw7mm2" path="res://scripts/SunLight.cs" id="4_sun"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
 background_color = Color(0.62, 0.78, 0.92, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.78, 0.82, 0.88, 1)
-ambient_light_energy = 0.45
+ambient_light_color = Color(0.55, 0.62, 0.72, 1)
+ambient_light_energy = 0.16
 tonemap_mode = 2
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
@@ -17,36 +18,41 @@ size = Vector2(10, 10)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
 albedo_color = Color(0.22, 0.24, 0.21, 1)
-roughness = 1.0
 
-[node name="World" type="Node3D"]
+[node name="World" type="Node3D" unique_id=2018241279]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=358221754]
 environment = SubResource("Environment_world")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.707107, -0.579228, 0.40558, 0, 0.573576, 0.819152, -0.707107, -0.579228, 0.40558, 0, 0, 0)
-light_energy = 1.15
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=343605444]
+transform = Transform3D(0.173648, -0.564863, 0.806723, 0, 0.819152, 0.573577, -0.984808, -0.099602, 0.142212, 0, 0, 0)
+light_energy = 1.55
 shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.0
+directional_shadow_mode = 0
+directional_shadow_max_distance = 50.0
+script = ExtResource("4_sun")
+SunRotationDegrees = Vector3(170, 80, 0)
 
-[node name="Floor" type="MeshInstance3D" parent="."]
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=335518873]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
 mesh = SubResource("PlaneMesh_floor")
 surface_material_override/0 = SubResource("StandardMaterial3D_floor")
 
-[node name="TerrainWorld" type="Node3D" parent="."]
+[node name="TerrainWorld" type="Node3D" parent="." unique_id=812695684]
 script = ExtResource("2_terrain")
 
-[node name="DebugDig" type="Node3D" parent="."]
+[node name="DebugDig" type="Node3D" parent="." unique_id=868599444]
 script = ExtResource("3_dig")
 
-[node name="CameraRig" type="Node3D" parent="."]
+[node name="CameraRig" type="Node3D" parent="." unique_id=222714023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
 script = ExtResource("1_cam")
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=2056696667]
 projection = 1
 current = true
 size = 12.0
-near = 0.05
-far = 200.0
+near = 5.0
+far = 80.0

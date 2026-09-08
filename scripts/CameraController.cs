@@ -20,8 +20,8 @@ public partial class CameraController : Node3D
         float pitch = Mathf.RadToDeg(Mathf.Atan(1f / Mathf.Sqrt(2f)));
         _camera.Projection = Camera3D.ProjectionType.Orthogonal;
         _camera.Size = OrthoSize;
-        _camera.Near = 0.05f;
-        _camera.Far = 200f;
+        _camera.Near = 5f;
+        _camera.Far = 80f;
         _camera.Current = true;
         _camera.RotationDegrees = new Vector3(-pitch, 45f, 0f);
         _camera.Position = _camera.Basis * new Vector3(0f, 0f, CameraDistance);

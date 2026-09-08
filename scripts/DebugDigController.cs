@@ -100,7 +100,7 @@ public partial class DebugDigController : Node3D
         }
 
         float spacing = Mathf.Max(StampSpacing, BrushRadius * 0.35f);
-        float distance = _lastStamp.DistanceTo(hit);
+        float distance = new Vector2(_lastStamp.X - hit.X, _lastStamp.Z - hit.Z).Length();
         if (distance < 0.0001f)
         {
             _terrain.Carve(hit, BrushRadius);
@@ -133,14 +133,9 @@ public partial class DebugDigController : Node3D
             return false;
         }
 
-        if (!_terrain.Raycast(from, dir, 500f, out point, out Vector3 normal))
+        if (!_terrain.Raycast(from, dir, 500f, out point, out Vector3 _))
         {
             return false;
-        }
-
-        if (normal.LengthSquared() > 1e-8f)
-        {
-            point -= normal.Normalized() * (BrushRadius * 0.25f);
         }
 
         return true;
