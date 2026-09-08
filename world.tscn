@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://dkes3lvjugcc6" path="res://scripts/DebugDigController.cs" id="3_dig"]
 [ext_resource type="Script" uid="uid://cjghqkpyw7mm2" path="res://scripts/SunLight.cs" id="4_sun"]
 [ext_resource type="PackedScene" path="res://player.tscn" id="5_player"]
+[ext_resource type="Material" uid="uid://c8terraincutaway" path="res://shaders/terrain_cutaway.tres" id="6_terrain_mat"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -13,12 +14,6 @@ ambient_light_source = 2
 ambient_light_color = Color(0.55, 0.62, 0.72, 1)
 ambient_light_energy = 0.16
 tonemap_mode = 2
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
-size = Vector2(10, 10)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
-albedo_color = Color(0.22, 0.24, 0.21, 1)
 
 [node name="World" type="Node3D" unique_id=2018241279]
 
@@ -36,13 +31,9 @@ directional_shadow_max_distance = 50.0
 script = ExtResource("4_sun")
 SunRotationDegrees = Vector3(170, 80, 0)
 
-[node name="Floor" type="MeshInstance3D" parent="." unique_id=335518873]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
-mesh = SubResource("PlaneMesh_floor")
-surface_material_override/0 = SubResource("StandardMaterial3D_floor")
-
 [node name="TerrainWorld" type="Node3D" parent="." unique_id=812695684]
 script = ExtResource("2_terrain")
+TerrainMaterial = ExtResource("6_terrain_mat")
 
 [node name="Player" parent="." instance=ExtResource("5_player")]
 

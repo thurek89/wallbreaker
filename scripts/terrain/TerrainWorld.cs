@@ -8,22 +8,33 @@ public partial class TerrainWorld : Node3D
     [Export] public int CellsXz { get; set; } = 64;
     [Export] public int CellsY { get; set; } = 32;
     [Export] public int NoiseSeed { get; set; } = 17;
-    [Export] public float NoiseFrequency { get; set; } = 0.28f;
-    [Export] public float NoiseAmplitude { get; set; } = 0.95f;
+    [Export] public float NoiseFrequency { get; set; } = 0.11f;
+    [Export] public float NoiseAmplitude { get; set; } = 1.0f;
+    [Export] public float CavernThreshold { get; set; } = 0.22f;
+    [Export] public float TunnelWidth { get; set; } = 0.22f;
+    [Export] public float CavernYScale { get; set; } = 1.2f;
     [Export] public float CrustHeight { get; set; } = 5f;
     [Export] public float FloorThickness { get; set; } = 0.45f;
     [Export] public float CeilingThickness { get; set; } = 0.55f;
     [Export] public float SpawnClearRadius { get; set; } = 2.0f;
-    [Export] public Color TerrainColor { get; set; } = new(0.55f, 0.45f, 0.32f);
-    [Export] public float CutRadius { get; set; } = 1.6f;
-    [Export] public float CutSoftness { get; set; } = 0.6f;
+    [Export] public ShaderMaterial? TerrainMaterial { get; set; }
+    [Export] public int LoadRadius { get; set; } = 1;
+    [Export] public int UnloadRadius { get; set; } = 2;
+    [Export] public int MaxChunkBuildsPerFrame { get; set; } = 2;
+    [Export] public float EdgePreload { get; set; } = 3.5f;
 
     private readonly Dictionary<(int X, int Z), TerrainChunk> _chunks = [];
+    private readonly Dictionary<(int X, int Z), ChunkVolume> _cache = [];
+    private readonly List<(int X, int Z)> _unloadScratch = [];
     private SdfSampler _sampler = null!;
     private ShaderMaterial _material = null!;
     private Aabb _bounds;
     private Node3D? _player;
     private Camera3D? _camera;
+    private StaticBody3D _walkFloor = null!;
+    private MeshInstance3D _ground = null!;
+    private BoxShape3D _walkFloorShape = null!;
+    private PlaneMesh _groundMesh = null!;
 
     public override void _Ready()
     {
@@ -33,21 +44,31 @@ public partial class TerrainWorld : Node3D
             NoiseAmplitude,
             CrustHeight,
             FloorThickness,
-            CeilingThickness);
-        _material = CreateCutawayMaterial();
-        _bounds = new Aabb(Vector3.Zero, Vector3.Zero);
-        EnsureChunk(0, 0);
+            CeilingThickness,
+            CavernThreshold,
+            TunnelWidth,
+            CavernYScale);
+        _material = ResolveTerrainMaterial();
+        _bounds = new Aabb(Vector3.Zero, new Vector3(ChunkSize, CrustHeight, ChunkSize));
         AddWalkFloor();
-        ClearSpawn(GetSpawnPoint(), SpawnClearRadius);
 
         Node? world = GetParent();
         _player = world?.GetNodeOrNull<Node3D>("Player");
         _camera = world?.GetNodeOrNull<Camera3D>("CameraRig/Camera3D");
+
+        EnsureChunk(0, 0);
+        ClearSpawn(GetSpawnPoint(), SpawnClearRadius);
+        StreamChunks();
     }
 
     public override void _Process(double _delta)
     {
         UpdateCutaway();
+    }
+
+    public override void _PhysicsProcess(double _delta)
+    {
+        StreamChunks();
     }
 
     public float FloorTop => _sampler?.FloorTop ?? FloorThickness;
@@ -76,11 +97,15 @@ public partial class TerrainWorld : Node3D
 
     public void Carve(Vector3 worldPoint, float radius)
     {
-        foreach (TerrainChunk chunk in _chunks.Values)
+        int x0 = Mathf.FloorToInt((worldPoint.X - radius) / ChunkSize) - 1;
+        int x1 = Mathf.FloorToInt((worldPoint.X + radius) / ChunkSize) + 1;
+        int z0 = Mathf.FloorToInt((worldPoint.Z - radius) / ChunkSize) - 1;
+        int z1 = Mathf.FloorToInt((worldPoint.Z + radius) / ChunkSize) + 1;
+        for (int iz = z0; iz <= z1; iz++)
         {
-            if (chunk.OverlapsBrush(worldPoint, radius))
+            for (int ix = x0; ix <= x1; ix++)
             {
-                chunk.SubtractSphere(worldPoint, radius);
+                CarveChunk(ix, iz, worldPoint, radius);
             }
         }
     }
@@ -139,14 +164,159 @@ public partial class TerrainWorld : Node3D
             return;
         }
 
+        _cache.Remove(key, out ChunkVolume? restored);
         var chunk = new TerrainChunk
         {
             Name = $"Chunk_{ix}_{iz}"
         };
         AddChild(chunk);
-        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _material);
+        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _material, restored);
+        StitchWithNeighbors(chunk);
+        chunk.RebuildMeshes();
         _chunks[key] = chunk;
         RebuildBounds();
+    }
+
+    private void StreamChunks()
+    {
+        Vector3 focus = _player?.GlobalPosition ?? GetSpawnPoint();
+        GetLoadRange(focus, out int minX, out int maxX, out int minZ, out int maxZ);
+
+        int budget = Mathf.Max(1, MaxChunkBuildsPerFrame);
+        for (int iz = minZ; iz <= maxZ && budget > 0; iz++)
+        {
+            for (int ix = minX; ix <= maxX && budget > 0; ix++)
+            {
+                if (_chunks.ContainsKey((ix, iz)))
+                {
+                    continue;
+                }
+
+                EnsureChunk(ix, iz);
+                budget--;
+            }
+        }
+
+        int cx = Mathf.FloorToInt(focus.X / ChunkSize);
+        int cz = Mathf.FloorToInt(focus.Z / ChunkSize);
+        int keep = Mathf.Max(UnloadRadius, LoadRadius);
+        _unloadScratch.Clear();
+        foreach ((int X, int Z) key in _chunks.Keys)
+        {
+            bool wanted = key.X >= minX && key.X <= maxX && key.Z >= minZ && key.Z <= maxZ;
+            bool near = Mathf.Abs(key.X - cx) <= keep && Mathf.Abs(key.Z - cz) <= keep;
+            if (!wanted && !near)
+            {
+                _unloadScratch.Add(key);
+            }
+        }
+
+        foreach ((int X, int Z) key in _unloadScratch)
+        {
+            UnloadChunk(key);
+        }
+
+        if (_unloadScratch.Count > 0)
+        {
+            RebuildBounds();
+        }
+
+        UpdateFollowFloor(focus);
+    }
+
+    private void UnloadChunk((int X, int Z) key)
+    {
+        if (!_chunks.Remove(key, out TerrainChunk? chunk))
+        {
+            return;
+        }
+
+        _cache[key] = chunk.TakeVolume();
+        RemoveChild(chunk);
+        chunk.Free();
+    }
+
+    private void StitchWithNeighbors(TerrainChunk chunk)
+    {
+        for (int dz = -1; dz <= 1; dz++)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                if (dx == 0 && dz == 0)
+                {
+                    continue;
+                }
+
+                var key = (chunk.ChunkX + dx, chunk.ChunkZ + dz);
+                if (_chunks.TryGetValue(key, out TerrainChunk? neighbor))
+                {
+                    chunk.StitchFrom(neighbor.Volume);
+                    if (neighbor.StitchFrom(chunk.Volume))
+                    {
+                        neighbor.RebuildMeshes();
+                    }
+                }
+                else if (_cache.TryGetValue(key, out ChunkVolume? cached))
+                {
+                    chunk.StitchFrom(cached);
+                    cached.CopyOverlappingFrom(chunk.Volume);
+                }
+            }
+        }
+    }
+
+    private void CarveChunk(int ix, int iz, Vector3 worldPoint, float radius)
+    {
+        var key = (ix, iz);
+        if (_chunks.TryGetValue(key, out TerrainChunk? chunk))
+        {
+            if (chunk.OverlapsBrush(worldPoint, radius))
+            {
+                chunk.SubtractSphere(worldPoint, radius);
+            }
+
+            return;
+        }
+
+        if (_cache.TryGetValue(key, out ChunkVolume? cached))
+        {
+            if (cached.OverlapsBrush(worldPoint, radius))
+            {
+                cached.SubtractSphere(worldPoint, radius, _sampler);
+            }
+
+            return;
+        }
+
+        if (!ChunkWouldOverlapBrush(ix, iz, worldPoint, radius))
+        {
+            return;
+        }
+
+        ChunkVolume volume = ChunkVolume.CreateFilled(ix, iz, ChunkSize, CellsXz, CellsY, _sampler);
+        volume.SubtractSphere(worldPoint, radius, _sampler);
+        _cache[key] = volume;
+    }
+
+    private bool ChunkWouldOverlapBrush(int ix, int iz, Vector3 center, float radius)
+    {
+        float voxel = ChunkSize / CellsXz;
+        Vector3 origin = new(ix * ChunkSize, 0f, iz * ChunkSize);
+        var bounds = new Aabb(origin, new Vector3(ChunkSize, CellsY * voxel, ChunkSize));
+        var brush = new Aabb(
+            center - new Vector3(radius, radius, radius),
+            new Vector3(radius * 2f, radius * 2f, radius * 2f));
+        return bounds.Grow(voxel * (ChunkVolume.Skirt + 1)).Intersects(brush);
+    }
+
+    private void GetLoadRange(Vector3 focus, out int minX, out int maxX, out int minZ, out int maxZ)
+    {
+        int radius = Mathf.Max(1, LoadRadius);
+        float preload = Mathf.Clamp(EdgePreload, 0f, ChunkSize);
+        minX = Mathf.FloorToInt((focus.X - preload) / ChunkSize) - radius;
+        maxX = Mathf.FloorToInt((focus.X + preload) / ChunkSize) + radius;
+        minZ = Mathf.FloorToInt((focus.Z - preload) / ChunkSize) - radius;
+        maxZ = Mathf.FloorToInt((focus.Z + preload) / ChunkSize) + radius;
     }
 
     private void RebuildBounds()
@@ -169,14 +339,14 @@ public partial class TerrainWorld : Node3D
         _bounds = first ? new Aabb(Vector3.Zero, new Vector3(ChunkSize, CrustHeight, ChunkSize)) : merged;
     }
 
-    private ShaderMaterial CreateCutawayMaterial()
+    private ShaderMaterial ResolveTerrainMaterial()
     {
-        var shader = GD.Load<Shader>("res://shaders/terrain_cutaway.gdshader");
-        var material = new ShaderMaterial { Shader = shader };
-        material.SetShaderParameter("albedo", TerrainColor);
-        material.SetShaderParameter("roughness_v", 0.85f);
-        material.SetShaderParameter("cut_radius", CutRadius);
-        material.SetShaderParameter("cut_softness", CutSoftness);
+        ShaderMaterial material = TerrainMaterial ?? new ShaderMaterial();
+        if (material.Shader == null)
+        {
+            material.Shader = GD.Load<Shader>("res://shaders/terrain_cutaway.gdshader");
+        }
+
         return material;
     }
 
@@ -187,7 +357,8 @@ public partial class TerrainWorld : Node3D
             return;
         }
 
-        Vector3 center = _player.GlobalPosition + new Vector3(0f, 0.8f, 0f);
+        Vector3 feet = _player.GlobalPosition;
+        Vector3 center = feet + new Vector3(0f, 0.8f, 0f);
         Vector3 axis = -_camera.GlobalBasis.Z;
         if (axis.LengthSquared() < 1e-8f)
         {
@@ -196,22 +367,43 @@ public partial class TerrainWorld : Node3D
 
         _material.SetShaderParameter("cut_center", center);
         _material.SetShaderParameter("cut_axis", axis.Normalized());
-        _material.SetShaderParameter("cut_radius", CutRadius);
-        _material.SetShaderParameter("cut_softness", CutSoftness);
+        _material.SetShaderParameter("cut_floor_y", feet.Y);
     }
 
     private void AddWalkFloor()
     {
-        var body = new StaticBody3D { Name = "WalkFloor" };
-        var shape = new CollisionShape3D
+        float span = FollowFloorSpan();
+        _walkFloorShape = new BoxShape3D { Size = new Vector3(span, FloorThickness, span) };
+        _walkFloor = new StaticBody3D { Name = "WalkFloor" };
+        _walkFloor.AddChild(new CollisionShape3D { Shape = _walkFloorShape });
+        AddChild(_walkFloor);
+
+        _groundMesh = new PlaneMesh { Size = new Vector2(span, span) };
+        _ground = new MeshInstance3D
         {
-            Shape = new BoxShape3D
+            Name = "Ground",
+            Mesh = _groundMesh,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            MaterialOverride = new StandardMaterial3D
             {
-                Size = new Vector3(ChunkSize, FloorThickness, ChunkSize)
+                AlbedoColor = new Color(0.22f, 0.24f, 0.21f)
             }
         };
-        body.Position = new Vector3(ChunkSize * 0.5f, FloorThickness * 0.5f, ChunkSize * 0.5f);
-        body.AddChild(shape);
-        AddChild(body);
+        AddChild(_ground);
+        UpdateFollowFloor(GetSpawnPoint());
+    }
+
+    private void UpdateFollowFloor(Vector3 focus)
+    {
+        float span = FollowFloorSpan();
+        _walkFloorShape.Size = new Vector3(span, FloorThickness, span);
+        _groundMesh.Size = new Vector2(span, span);
+        _walkFloor.Position = new Vector3(focus.X, FloorThickness * 0.5f, focus.Z);
+        _ground.Position = new Vector3(focus.X, 0f, focus.Z);
+    }
+
+    private float FollowFloorSpan()
+    {
+        return ChunkSize * (2 * Mathf.Max(UnloadRadius, LoadRadius) + 3);
     }
 }

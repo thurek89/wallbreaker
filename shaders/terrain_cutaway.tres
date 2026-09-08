@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bihf8ylqrn21i"]
+
+[ext_resource type="Shader" uid="uid://dwjhg7m2h0wxj" path="res://shaders/terrain_cutaway.gdshader" id="1_shader"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/albedo = Color(0.55, 0.45, 0.32, 1)
+shader_parameter/roughness_v = 0.85
+shader_parameter/cut_center = Vector3(0, 0, 0)
+shader_parameter/cut_axis = Vector3(0, 0, -1)
+shader_parameter/cut_radius = 8.0
+shader_parameter/cut_softness = 1.10000001639132
+shader_parameter/cut_floor_y = 0.0

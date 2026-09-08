@@ -1,14 +1,9 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene format=3 uid="uid://cbkee2yc3ks2y"]
 
-[ext_resource type="Script" path="res://scripts/PlayerController.cs" id="1_player"]
-[ext_resource type="Script" path="res://scripts/weapons/WeaponController.cs" id="2_weapon"]
+[ext_resource type="Script" uid="uid://hegpdauftxyl" path="res://scripts/PlayerController.cs" id="1_player"]
+[ext_resource type="Script" uid="uid://bp47cneehp15h" path="res://scripts/weapons/WeaponController.cs" id="2_weapon"]
 [ext_resource type="PackedScene" path="res://weapons/bullet.tscn" id="3_bullet"]
 [ext_resource type="PackedScene" path="res://weapons/rocket.tscn" id="4_rocket"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
-albedo_color = Color(0.22, 0.58, 0.72, 1)
-roughness = 0.55
-metallic = 0.05
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
 radius = 0.3
@@ -16,68 +11,68 @@ height = 1.6
 radial_segments = 16
 rings = 4
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
+albedo_color = Color(0.22, 0.58, 0.72, 1)
+metallic = 0.05
+roughness = 0.55
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.3
 height = 1.6
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mg"]
-albedo_color = Color(0.9, 0.72, 0.16, 1)
-roughness = 0.45
-metallic = 0.2
-
 [sub_resource type="BoxMesh" id="BoxMesh_mg"]
 size = Vector3(0.1, 0.1, 0.36)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rl"]
-albedo_color = Color(0.72, 0.18, 0.12, 1)
-roughness = 0.4
-metallic = 0.15
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mg"]
+albedo_color = Color(0.9, 0.72, 0.16, 1)
+metallic = 0.2
+roughness = 0.45
 
 [sub_resource type="BoxMesh" id="BoxMesh_rl"]
 size = Vector3(0.14, 0.14, 0.48)
 
-[node name="Player" type="CharacterBody3D"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rl"]
+albedo_color = Color(0.72, 0.18, 0.12, 1)
+metallic = 0.15
+roughness = 0.4
+
+[node name="Player" type="CharacterBody3D" unique_id=77038591]
 collision_layer = 2
 floor_snap_length = 0.25
 script = ExtResource("1_player")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1972382180]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-cast_shadow = 1
 mesh = SubResource("CapsuleMesh_player")
 surface_material_override/0 = SubResource("StandardMaterial3D_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1041208439]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_player")
 
-[node name="FillLight" type="OmniLight3D" parent="."]
+[node name="FillLight" type="OmniLight3D" parent="." unique_id=885988483]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-light_energy = 0.45
 light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 0.45
 light_specular = 0.15
-omni_range = 5.0
 omni_attenuation = 1.5
-shadow_enabled = false
 
-[node name="WeaponMount" type="Node3D" parent="."]
+[node name="WeaponMount" type="Node3D" parent="." unique_id=2072143196]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.95, 0)
 script = ExtResource("2_weapon")
 BulletScene = ExtResource("3_bullet")
 RocketScene = ExtResource("4_rocket")
 
-[node name="MachineGun" type="MeshInstance3D" parent="WeaponMount"]
+[node name="MachineGun" type="MeshInstance3D" parent="WeaponMount" unique_id=511366807]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.1)
-cast_shadow = 1
 mesh = SubResource("BoxMesh_mg")
 surface_material_override/0 = SubResource("StandardMaterial3D_mg")
 
-[node name="RocketLauncher" type="MeshInstance3D" parent="WeaponMount"]
+[node name="RocketLauncher" type="MeshInstance3D" parent="WeaponMount" unique_id=66662771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.14)
 visible = false
-cast_shadow = 1
 mesh = SubResource("BoxMesh_rl")
 surface_material_override/0 = SubResource("StandardMaterial3D_rl")
 
-[node name="Muzzle" type="Marker3D" parent="WeaponMount"]
+[node name="Muzzle" type="Marker3D" parent="WeaponMount" unique_id=1818485306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.32)

@@ -4,13 +4,15 @@ namespace Wallbreaker;
 
 public partial class TerrainChunk : Node3D
 {
-    public const int Skirt = 1;
+    public const int Skirt = ChunkVolume.Skirt;
     public const int BrickCellSize = 16;
 
     public int ChunkX { get; private set; }
     public int ChunkZ { get; private set; }
     public Aabb Bounds { get; private set; }
+    public ChunkVolume Volume => _volume;
 
+    private ChunkVolume _volume = null!;
     private float[] _sdf = [];
     private int _nx;
     private int _ny;
@@ -43,82 +45,52 @@ public partial class TerrainChunk : Node3D
         int cellsXz,
         int cellsY,
         SdfSampler sampler,
-        Material material)
+        Material material,
+        ChunkVolume? restored = null)
     {
         ChunkX = chunkX;
         ChunkZ = chunkZ;
         _sampler = sampler;
         _material = material;
-        _cellsX = cellsXz;
-        _cellsY = cellsY;
-        _cellsZ = cellsXz;
-        _voxelSize = chunkSize / cellsXz;
-        _nx = _cellsX + 1 + Skirt * 2;
-        _ny = _cellsY + 1;
-        _nz = _cellsZ + 1 + Skirt * 2;
-        _sdf = new float[_nx * _ny * _nz];
-
-        Vector3 chunkOrigin = new(chunkX * chunkSize, 0f, chunkZ * chunkSize);
-        _gridOrigin = chunkOrigin - new Vector3(Skirt * _voxelSize, 0f, Skirt * _voxelSize);
-        Bounds = new Aabb(chunkOrigin, new Vector3(chunkSize, _cellsY * _voxelSize, chunkSize));
-
+        _volume = restored ?? ChunkVolume.CreateFilled(chunkX, chunkZ, chunkSize, cellsXz, cellsY, sampler);
+        BindVolume(_volume);
         CreateBricks();
-        FillVolume();
+    }
+
+    public ChunkVolume TakeVolume()
+    {
+        return _volume;
+    }
+
+    public bool StitchFrom(ChunkVolume other)
+    {
+        return _volume.CopyOverlappingFrom(other);
+    }
+
+    public void RebuildMeshes()
+    {
         RemeshAll();
     }
 
     public bool SubtractSphere(Vector3 center, float radius)
     {
-        if (_sdf.Length == 0 || radius <= 0f || _sampler == null)
+        if (_sampler == null)
         {
             return false;
         }
 
-        float pad = _voxelSize;
-        float reach = radius + pad;
-        Vector3 min = (center - new Vector3(reach, reach, reach) - _gridOrigin) / _voxelSize;
-        Vector3 max = (center + new Vector3(reach, reach, reach) - _gridOrigin) / _voxelSize;
-        int x0 = Mathf.Clamp(Mathf.FloorToInt(min.X), 0, _nx - 1);
-        int y0 = Mathf.Clamp(Mathf.FloorToInt(min.Y), 0, _ny - 1);
-        int z0 = Mathf.Clamp(Mathf.FloorToInt(min.Z), 0, _nz - 1);
-        int x1 = Mathf.Clamp(Mathf.CeilToInt(max.X), 0, _nx - 1);
-        int y1 = Mathf.Clamp(Mathf.CeilToInt(max.Y), 0, _ny - 1);
-        int z1 = Mathf.Clamp(Mathf.CeilToInt(max.Z), 0, _nz - 1);
-
-        bool changed = false;
-        for (int z = z0; z <= z1; z++)
+        if (!_volume.SubtractSphere(center, radius, _sampler, out int x0, out int y0, out int z0, out int x1, out int y1, out int z1))
         {
-            for (int y = y0; y <= y1; y++)
-            {
-                for (int x = x0; x <= x1; x++)
-                {
-                    Vector3 world = _gridOrigin + new Vector3(x, y, z) * _voxelSize;
-                    int i = x + _nx * (y + _ny * z);
-                    float sphere = world.DistanceTo(center) - radius;
-                    float carved = _sampler.PreserveFloor(Mathf.Max(_sdf[i], -sphere), world);
-                    if (Mathf.Abs(carved - _sdf[i]) > 1e-5f)
-                    {
-                        _sdf[i] = carved;
-                        changed = true;
-                    }
-                }
-            }
+            return false;
         }
 
-        if (changed)
-        {
-            MarkDirtyVoxelRange(x0, y0, z0, x1, y1, z1);
-        }
-
-        return changed;
+        MarkDirtyVoxelRange(x0, y0, z0, x1, y1, z1);
+        return true;
     }
 
     public bool OverlapsBrush(Vector3 center, float radius)
     {
-        var brush = new Aabb(
-            center - new Vector3(radius, radius, radius),
-            new Vector3(radius * 2f, radius * 2f, radius * 2f));
-        return Bounds.Intersects(brush);
+        return _volume.OverlapsBrush(center, radius);
     }
 
     public void RemeshDirty()
@@ -284,24 +256,18 @@ public partial class TerrainChunk : Node3D
         return Mathf.Min(cell / BrickCellSize, brickCount - 1);
     }
 
-    private void FillVolume()
+    private void BindVolume(ChunkVolume volume)
     {
-        if (_sampler == null)
-        {
-            return;
-        }
-
-        for (int z = 0; z < _nz; z++)
-        {
-            for (int y = 0; y < _ny; y++)
-            {
-                for (int x = 0; x < _nx; x++)
-                {
-                    Vector3 world = _gridOrigin + new Vector3(x, y, z) * _voxelSize;
-                    _sdf[x + _nx * (y + _ny * z)] = _sampler.Sample(world);
-                }
-            }
-        }
+        _sdf = volume.Sdf;
+        _nx = volume.Nx;
+        _ny = volume.Ny;
+        _nz = volume.Nz;
+        _cellsX = volume.CellsX;
+        _cellsY = volume.CellsY;
+        _cellsZ = volume.CellsZ;
+        _voxelSize = volume.VoxelSize;
+        _gridOrigin = volume.GridOrigin;
+        Bounds = volume.Bounds;
     }
 
     private void CreateBricks()
