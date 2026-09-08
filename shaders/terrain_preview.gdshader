@@ -1,9 +1,7 @@
 shader_type spatial;
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
-group_uniforms Appearance;
-uniform vec3 albedo : source_color = vec3(0.55, 0.45, 0.32);
-uniform float roughness_v : hint_range(0.0, 1.0, 0.01) = 0.85;
+#include "res://shaders/terrain_shading.gdshaderinc"
 
 group_uniforms Slice;
 uniform bool clip_enabled = true;
@@ -11,9 +9,11 @@ uniform vec3 clip_center = vec3(5.0, 2.5, 5.0);
 uniform vec3 clip_normal = vec3(1.0, 0.0, 1.0);
 
 varying vec3 world_pos;
+varying vec3 world_normal;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	world_normal = MODEL_NORMAL_MATRIX * NORMAL;
 }
 
 void fragment() {
@@ -28,7 +28,7 @@ void fragment() {
 		}
 	}
 
-	ALBEDO = albedo;
+	ALBEDO = terrain_albedo(world_pos, normalize(world_normal), 0.0);
 	ROUGHNESS = roughness_v;
 	METALLIC = 0.0;
 }

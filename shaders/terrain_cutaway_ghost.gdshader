@@ -4,10 +4,10 @@ render_mode blend_mix, depth_draw_never, cull_back, unshaded, shadows_disabled, 
 group_uniforms Cutaway;
 uniform vec3 cut_center = vec3(0.0);
 uniform vec3 cut_axis = vec3(0.0, 0.0, -1.0);
-uniform float cut_radius : hint_range(0.0, 8.0, 0.05) = 1.6;
-uniform float cut_softness : hint_range(0.0, 4.0, 0.05) = 0.6;
+uniform float cut_radius : hint_range(0.0, 16.0, 0.05) = 8.0;
+uniform float cut_softness : hint_range(0.0, 4.0, 0.05) = 1.1;
 uniform float cut_floor_y = 0.0;
-uniform float cut_clear_radius : hint_range(0.0, 8.0, 0.05) = 2.0;
+uniform float cut_clear_radius : hint_range(0.0, 16.0, 0.05) = 2.0;
 uniform float cut_clear_softness : hint_range(0.0, 4.0, 0.05) = 0.5;
 
 group_uniforms Silhouette;

@@ -14,6 +14,10 @@ public partial class TerrainWorld : Node3D
     [Export] public int UnloadRadius { get; set; } = 2;
     [Export] public int MaxChunkBuildsPerFrame { get; set; } = 2;
     [Export] public float EdgePreload { get; set; } = 3.5f;
+    [Export] public float CutRadius { get; set; } = 8.0f;
+    [Export] public float CutSoftness { get; set; } = 1.1f;
+    [Export] public float CutClearRadius { get; set; } = 2.0f;
+    [Export] public float CutClearSoftness { get; set; } = 0.5f;
 
     private readonly Dictionary<(int X, int Z), TerrainChunk> _chunks = [];
     private readonly Dictionary<(int X, int Z), ChunkVolume> _cache = [];
@@ -377,16 +381,18 @@ public partial class TerrainWorld : Node3D
         if (_material.NextPass is ShaderMaterial ghost)
         {
             ApplyCutaway(ghost, center, axis.Normalized(), feet.Y);
-            ghost.SetShaderParameter("cut_radius", _material.GetShaderParameter("cut_radius"));
-            ghost.SetShaderParameter("cut_softness", _material.GetShaderParameter("cut_softness"));
         }
     }
 
-    private static void ApplyCutaway(ShaderMaterial material, Vector3 center, Vector3 axis, float floorY)
+    private void ApplyCutaway(ShaderMaterial material, Vector3 center, Vector3 axis, float floorY)
     {
         material.SetShaderParameter("cut_center", center);
         material.SetShaderParameter("cut_axis", axis);
         material.SetShaderParameter("cut_floor_y", floorY);
+        material.SetShaderParameter("cut_radius", CutRadius);
+        material.SetShaderParameter("cut_softness", CutSoftness);
+        material.SetShaderParameter("cut_clear_radius", CutClearRadius);
+        material.SetShaderParameter("cut_clear_softness", CutClearSoftness);
     }
 
     private void AddWalkFloor()
@@ -406,7 +412,7 @@ public partial class TerrainWorld : Node3D
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
             MaterialOverride = new StandardMaterial3D
             {
-                AlbedoColor = new Color(0.22f, 0.24f, 0.21f)
+                AlbedoColor = new Color(0.40f, 0.32f, 0.22f)
             }
         };
         AddChild(_ground);

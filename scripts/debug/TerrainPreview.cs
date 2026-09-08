@@ -184,7 +184,9 @@ public partial class TerrainPreview : Node3D
         {
             Shader = GD.Load<Shader>("res://shaders/terrain_preview.gdshader")
         };
-        _material.SetShaderParameter("albedo", new Color(0.55f, 0.45f, 0.32f));
+        _material.SetShaderParameter("floor_albedo", new Color(0.40f, 0.32f, 0.22f));
+        _material.SetShaderParameter("wall_albedo", new Color(0.64f, 0.56f, 0.48f));
+        _material.SetShaderParameter("ceiling_albedo", new Color(0.26f, 0.23f, 0.22f));
         _material.SetShaderParameter("roughness_v", 0.85f);
     }
 
