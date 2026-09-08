@@ -4,11 +4,11 @@ namespace Wallbreaker;
 
 /// <summary>
 /// Debug-only dig: hold left mouse or a finger and paint over the terrain.
-/// Replace this with real weapons / tools later. On by default.
+/// Off by default now that weapons carve; re-enable on the node to paint again.
 /// </summary>
 public partial class DebugDigController : Node3D
 {
-    [Export] public bool Enabled { get; set; } = true;
+    [Export] public bool Enabled { get; set; } = false;
     [Export] public float BrushRadius { get; set; } = 0.75f;
     [Export] public float StampSpacing { get; set; } = 0.35f;
 

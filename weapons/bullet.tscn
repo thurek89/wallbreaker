@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/BulletProjectile.cs" id="1_bullet"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bullet"]
+shading_mode = 0
+albedo_color = Color(0.95, 0.96, 1, 1)
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_bullet"]
+radius = 0.06
+height = 0.12
+radial_segments = 12
+rings = 6
+
+[node name="Bullet" type="Node3D"]
+script = ExtResource("1_bullet")
+Speed = 22.0
+MaxLifetime = 2.2
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+cast_shadow = 0
+mesh = SubResource("SphereMesh_bullet")
+surface_material_override/0 = SubResource("StandardMaterial3D_bullet")

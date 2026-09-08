@@ -48,6 +48,7 @@ script = ExtResource("2_terrain")
 
 [node name="DebugDig" type="Node3D" parent="." unique_id=868599444]
 script = ExtResource("3_dig")
+Enabled = false
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=222714023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)

@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/RocketProjectile.cs" id="1_rocket"]
+[ext_resource type="PackedScene" path="res://weapons/explosion.tscn" id="2_fx"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rocket"]
+albedo_color = Color(0.82, 0.28, 0.12, 1)
+roughness = 0.4
+metallic = 0.15
+emission_enabled = true
+emission = Color(0.9, 0.25, 0.05, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_rocket"]
+radius = 0.07
+height = 0.34
+radial_segments = 12
+rings = 4
+
+[node name="Rocket" type="Node3D"]
+script = ExtResource("1_rocket")
+Speed = 11.0
+MaxLifetime = 4.0
+BlastRadius = 1.0
+ExplosionScene = ExtResource("2_fx")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0)
+cast_shadow = 1
+mesh = SubResource("CapsuleMesh_rocket")
+surface_material_override/0 = SubResource("StandardMaterial3D_rocket")

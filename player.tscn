@@ -1,6 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/PlayerController.cs" id="1_player"]
+[ext_resource type="Script" path="res://scripts/weapons/WeaponController.cs" id="2_weapon"]
+[ext_resource type="PackedScene" path="res://weapons/bullet.tscn" id="3_bullet"]
+[ext_resource type="PackedScene" path="res://weapons/rocket.tscn" id="4_rocket"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
 albedo_color = Color(0.22, 0.58, 0.72, 1)
@@ -17,6 +20,22 @@ rings = 4
 radius = 0.3
 height = 1.6
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mg"]
+albedo_color = Color(0.9, 0.72, 0.16, 1)
+roughness = 0.45
+metallic = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_mg"]
+size = Vector3(0.1, 0.1, 0.36)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rl"]
+albedo_color = Color(0.72, 0.18, 0.12, 1)
+roughness = 0.4
+metallic = 0.15
+
+[sub_resource type="BoxMesh" id="BoxMesh_rl"]
+size = Vector3(0.14, 0.14, 0.48)
+
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
 floor_snap_length = 0.25
@@ -31,3 +50,25 @@ surface_material_override/0 = SubResource("StandardMaterial3D_player")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_player")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.95, 0)
+script = ExtResource("2_weapon")
+BulletScene = ExtResource("3_bullet")
+RocketScene = ExtResource("4_rocket")
+
+[node name="MachineGun" type="MeshInstance3D" parent="WeaponMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.1)
+cast_shadow = 1
+mesh = SubResource("BoxMesh_mg")
+surface_material_override/0 = SubResource("StandardMaterial3D_mg")
+
+[node name="RocketLauncher" type="MeshInstance3D" parent="WeaponMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.14)
+visible = false
+cast_shadow = 1
+mesh = SubResource("BoxMesh_rl")
+surface_material_override/0 = SubResource("StandardMaterial3D_rl")
+
+[node name="Muzzle" type="Marker3D" parent="WeaponMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.32)
