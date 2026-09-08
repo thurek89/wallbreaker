@@ -4,18 +4,17 @@ namespace Wallbreaker;
 
 public partial class CameraController : Node3D
 {
-    [Export] public float PanSpeed { get; set; } = 10f;
-    [Export] public float BoundsMargin { get; set; } = 0.5f;
     [Export] public float OrthoSize { get; set; } = 12f;
     [Export] public float CameraDistance { get; set; } = 40f;
+    [Export] public float FollowLerp { get; set; } = 12f;
 
     private Camera3D _camera = null!;
-    private TerrainWorld? _terrain;
+    private Node3D? _follow;
 
     public override void _Ready()
     {
         _camera = GetNode<Camera3D>("Camera3D");
-        _terrain = GetParent()?.GetNodeOrNull<TerrainWorld>("TerrainWorld");
+        _follow = GetParent()?.GetNodeOrNull<Node3D>("Player");
 
         float pitch = Mathf.RadToDeg(Mathf.Atan(1f / Mathf.Sqrt(2f)));
         _camera.Projection = Camera3D.ProjectionType.Orthogonal;
@@ -26,39 +25,28 @@ public partial class CameraController : Node3D
         _camera.RotationDegrees = new Vector3(-pitch, 45f, 0f);
         _camera.Position = _camera.Basis * new Vector3(0f, 0f, CameraDistance);
 
-        Aabb bounds = GetWorldBounds();
-        Vector3 center = bounds.GetCenter();
-        GlobalPosition = new Vector3(center.X, 0f, center.Z);
+        SnapToFollow();
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
-        Vector2 input = Input.GetVector("camera_left", "camera_right", "camera_back", "camera_forward");
-        if (input == Vector2.Zero)
+        if (_follow == null)
         {
             return;
         }
 
-        Vector3 right = FlattenOntoXz(_camera.GlobalBasis.X);
-        Vector3 forward = FlattenOntoXz(-_camera.GlobalBasis.Z);
-        Vector3 motion = (right * input.X + forward * input.Y) * PanSpeed * (float)delta;
-
-        Vector3 next = GlobalPosition + motion;
-        Aabb bounds = GetWorldBounds().Grow(BoundsMargin);
-        next.X = Mathf.Clamp(next.X, bounds.Position.X, bounds.End.X);
-        next.Y = 0f;
-        next.Z = Mathf.Clamp(next.Z, bounds.Position.Z, bounds.End.Z);
-        GlobalPosition = next;
+        Vector3 target = new(_follow.GlobalPosition.X, 0f, _follow.GlobalPosition.Z);
+        float t = 1f - Mathf.Exp(-FollowLerp * (float)delta);
+        GlobalPosition = GlobalPosition.Lerp(target, t);
     }
 
-    private Aabb GetWorldBounds()
+    private void SnapToFollow()
     {
-        return _terrain?.GetBounds() ?? new Aabb(Vector3.Zero, new Vector3(10f, 5f, 10f));
-    }
+        if (_follow == null)
+        {
+            return;
+        }
 
-    private static Vector3 FlattenOntoXz(Vector3 axis)
-    {
-        axis.Y = 0f;
-        return axis.LengthSquared() > 0.0001f ? axis.Normalized() : Vector3.Zero;
+        GlobalPosition = new Vector3(_follow.GlobalPosition.X, 0f, _follow.GlobalPosition.Z);
     }
 }

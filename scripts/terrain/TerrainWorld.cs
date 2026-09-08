@@ -13,6 +13,7 @@ public partial class TerrainWorld : Node3D
     [Export] public float CrustHeight { get; set; } = 5f;
     [Export] public float FloorThickness { get; set; } = 0.45f;
     [Export] public float CeilingThickness { get; set; } = 0.55f;
+    [Export] public float SpawnClearRadius { get; set; } = 2.0f;
     [Export] public Color TerrainColor { get; set; } = new(0.55f, 0.45f, 0.32f);
 
     private readonly Dictionary<(int X, int Z), TerrainChunk> _chunks = [];
@@ -38,6 +39,21 @@ public partial class TerrainWorld : Node3D
         };
         _bounds = new Aabb(Vector3.Zero, Vector3.Zero);
         EnsureChunk(0, 0);
+        AddWalkFloor();
+        ClearSpawn(GetSpawnPoint(), SpawnClearRadius);
+    }
+
+    public float FloorTop => _sampler?.FloorTop ?? FloorThickness;
+
+    public Vector3 GetSpawnPoint()
+    {
+        return new Vector3(ChunkSize * 0.5f, FloorTop, ChunkSize * 0.5f);
+    }
+
+    public void ClearSpawn(Vector3 worldPoint, float radius)
+    {
+        Carve(worldPoint, radius);
+        CommitCarve();
     }
 
     public Aabb GetBounds()
@@ -120,5 +136,20 @@ public partial class TerrainWorld : Node3D
         }
 
         _bounds = first ? new Aabb(Vector3.Zero, new Vector3(ChunkSize, CrustHeight, ChunkSize)) : merged;
+    }
+
+    private void AddWalkFloor()
+    {
+        var body = new StaticBody3D { Name = "WalkFloor" };
+        var shape = new CollisionShape3D
+        {
+            Shape = new BoxShape3D
+            {
+                Size = new Vector3(ChunkSize, FloorThickness, ChunkSize)
+            }
+        };
+        body.Position = new Vector3(ChunkSize * 0.5f, FloorThickness * 0.5f, ChunkSize * 0.5f);
+        body.AddChild(shape);
+        AddChild(body);
     }
 }
