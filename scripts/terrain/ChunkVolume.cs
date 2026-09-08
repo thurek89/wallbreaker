@@ -59,7 +59,7 @@ public sealed class ChunkVolume
         int cellsY,
         SdfSampler sampler)
     {
-        ChunkVolume volume = CreateEmpty(chunkX, chunkZ, chunkSize, cellsXz, cellsY);
+        ChunkVolume volume = CreateEmpty(chunkX, chunkZ, chunkSize, cellsXz, cellsY, sampler.BandMinY);
         volume.Fill(sampler);
         return volume;
     }
@@ -69,13 +69,14 @@ public sealed class ChunkVolume
         int chunkZ,
         float chunkSize,
         int cellsXz,
-        int cellsY)
+        int cellsY,
+        float originY = 0f)
     {
         float voxelSize = chunkSize / cellsXz;
         int nx = cellsXz + 1 + Skirt * 2;
         int ny = cellsY + 1;
         int nz = cellsXz + 1 + Skirt * 2;
-        Vector3 chunkOrigin = new(chunkX * chunkSize, 0f, chunkZ * chunkSize);
+        Vector3 chunkOrigin = new(chunkX * chunkSize, originY, chunkZ * chunkSize);
         Vector3 gridOrigin = chunkOrigin - new Vector3(Skirt * voxelSize, 0f, Skirt * voxelSize);
         var bounds = new Aabb(chunkOrigin, new Vector3(chunkSize, cellsY * voxelSize, chunkSize));
         return new ChunkVolume(
@@ -185,13 +186,15 @@ public sealed class ChunkVolume
         }
 
         int shiftX = Mathf.RoundToInt((GridOrigin.X - other.GridOrigin.X) / VoxelSize);
+        int shiftY = Mathf.RoundToInt((GridOrigin.Y - other.GridOrigin.Y) / VoxelSize);
         int shiftZ = Mathf.RoundToInt((GridOrigin.Z - other.GridOrigin.Z) / VoxelSize);
         int x0 = Mathf.Max(0, -shiftX);
         int x1 = Mathf.Min(Nx, other.Nx - shiftX);
+        int y0 = Mathf.Max(0, -shiftY);
+        int y1 = Mathf.Min(Ny, other.Ny - shiftY);
         int z0 = Mathf.Max(0, -shiftZ);
         int z1 = Mathf.Min(Nz, other.Nz - shiftZ);
-        int y1 = Mathf.Min(Ny, other.Ny);
-        if (x0 >= x1 || z0 >= z1 || y1 <= 0)
+        if (x0 >= x1 || y0 >= y1 || z0 >= z1)
         {
             return false;
         }
@@ -200,10 +203,11 @@ public sealed class ChunkVolume
         for (int z = z0; z < z1; z++)
         {
             int oz = z + shiftZ;
-            for (int y = 0; y < y1; y++)
+            for (int y = y0; y < y1; y++)
             {
+                int oy = y + shiftY;
                 int dstRow = Nx * (y + Ny * z);
-                int srcRow = other.Nx * (y + other.Ny * oz);
+                int srcRow = other.Nx * (oy + other.Ny * oz);
                 for (int x = x0; x < x1; x++)
                 {
                     float v = other.Sdf[x + shiftX + srcRow];

@@ -7,15 +7,7 @@ public partial class TerrainWorld : Node3D
     [Export] public float ChunkSize { get; set; } = 10f;
     [Export] public int CellsXz { get; set; } = 64;
     [Export] public int CellsY { get; set; } = 32;
-    [Export] public int NoiseSeed { get; set; } = 17;
-    [Export] public float NoiseFrequency { get; set; } = 0.11f;
-    [Export] public float NoiseAmplitude { get; set; } = 1.0f;
-    [Export] public float CavernThreshold { get; set; } = 0.22f;
-    [Export] public float TunnelWidth { get; set; } = 0.22f;
-    [Export] public float CavernYScale { get; set; } = 1.2f;
-    [Export] public float CrustHeight { get; set; } = 5f;
-    [Export] public float FloorThickness { get; set; } = 0.45f;
-    [Export] public float CeilingThickness { get; set; } = 0.55f;
+    [Export] public TerrainNoise? Noise { get; set; }
     [Export] public float SpawnClearRadius { get; set; } = 2.0f;
     [Export] public ShaderMaterial? TerrainMaterial { get; set; }
     [Export] public int LoadRadius { get; set; } = 1;
@@ -38,18 +30,11 @@ public partial class TerrainWorld : Node3D
 
     public override void _Ready()
     {
-        _sampler = new SdfSampler(
-            NoiseSeed,
-            NoiseFrequency,
-            NoiseAmplitude,
-            CrustHeight,
-            FloorThickness,
-            CeilingThickness,
-            CavernThreshold,
-            TunnelWidth,
-            CavernYScale);
+        _sampler = new SdfSampler(ResolveNoise());
         _material = ResolveTerrainMaterial();
-        _bounds = new Aabb(Vector3.Zero, new Vector3(ChunkSize, CrustHeight, ChunkSize));
+        _bounds = new Aabb(
+            new Vector3(0f, _sampler.BandMinY, 0f),
+            new Vector3(ChunkSize, _sampler.CrustHeight, ChunkSize));
         AddWalkFloor();
 
         Node? world = GetParent();
@@ -71,7 +56,7 @@ public partial class TerrainWorld : Node3D
         StreamChunks();
     }
 
-    public float FloorTop => _sampler?.FloorTop ?? FloorThickness;
+    public float FloorTop => _sampler?.FloorTop ?? ResolveNoise().BandMinY + ResolveNoise().FloorThickness;
 
     public Vector3 GetSpawnPoint()
     {
@@ -81,7 +66,7 @@ public partial class TerrainWorld : Node3D
     public void ClearSpawn(Vector3 worldPoint, float radius)
     {
         float spacing = Mathf.Max(radius * 0.85f, 0.25f);
-        float y1 = CrustHeight + radius;
+        float y1 = _sampler.BandMaxY + radius;
         for (float y = FloorTop; y <= y1; y += spacing)
         {
             Carve(new Vector3(worldPoint.X, y, worldPoint.Z), radius);
@@ -301,7 +286,7 @@ public partial class TerrainWorld : Node3D
     private bool ChunkWouldOverlapBrush(int ix, int iz, Vector3 center, float radius)
     {
         float voxel = ChunkSize / CellsXz;
-        Vector3 origin = new(ix * ChunkSize, 0f, iz * ChunkSize);
+        Vector3 origin = new(ix * ChunkSize, _sampler.BandMinY, iz * ChunkSize);
         var bounds = new Aabb(origin, new Vector3(ChunkSize, CellsY * voxel, ChunkSize));
         var brush = new Aabb(
             center - new Vector3(radius, radius, radius),
@@ -336,7 +321,22 @@ public partial class TerrainWorld : Node3D
             }
         }
 
-        _bounds = first ? new Aabb(Vector3.Zero, new Vector3(ChunkSize, CrustHeight, ChunkSize)) : merged;
+        _bounds = first
+            ? new Aabb(
+                new Vector3(0f, _sampler.BandMinY, 0f),
+                new Vector3(ChunkSize, _sampler.CrustHeight, ChunkSize))
+            : merged;
+    }
+
+    private TerrainNoise ResolveNoise()
+    {
+        if (GodotObject.IsInstanceValid(Noise))
+        {
+            return Noise!;
+        }
+
+        TerrainNoise? loaded = GD.Load<TerrainNoise>("res://terrain/default_noise.tres");
+        return loaded ?? new TerrainNoise();
     }
 
     private ShaderMaterial ResolveTerrainMaterial()
@@ -391,8 +391,9 @@ public partial class TerrainWorld : Node3D
 
     private void AddWalkFloor()
     {
+        float floor = _sampler.FloorThickness;
         float span = FollowFloorSpan();
-        _walkFloorShape = new BoxShape3D { Size = new Vector3(span, FloorThickness, span) };
+        _walkFloorShape = new BoxShape3D { Size = new Vector3(span, floor, span) };
         _walkFloor = new StaticBody3D { Name = "WalkFloor" };
         _walkFloor.AddChild(new CollisionShape3D { Shape = _walkFloorShape });
         AddChild(_walkFloor);
@@ -414,11 +415,13 @@ public partial class TerrainWorld : Node3D
 
     private void UpdateFollowFloor(Vector3 focus)
     {
+        float y0 = _sampler.BandMinY;
+        float floor = _sampler.FloorThickness;
         float span = FollowFloorSpan();
-        _walkFloorShape.Size = new Vector3(span, FloorThickness, span);
+        _walkFloorShape.Size = new Vector3(span, floor, span);
         _groundMesh.Size = new Vector2(span, span);
-        _walkFloor.Position = new Vector3(focus.X, FloorThickness * 0.5f, focus.Z);
-        _ground.Position = new Vector3(focus.X, 0f, focus.Z);
+        _walkFloor.Position = new Vector3(focus.X, y0 + floor * 0.5f, focus.Z);
+        _ground.Position = new Vector3(focus.X, y0, focus.Z);
     }
 
     private float FollowFloorSpan()

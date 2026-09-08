@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://cjghqkpyw7mm2" path="res://scripts/SunLight.cs" id="4_sun"]
 [ext_resource type="PackedScene" path="res://player.tscn" id="5_player"]
 [ext_resource type="Material" uid="uid://c8terraincutaway" path="res://shaders/terrain_cutaway.tres" id="6_terrain_mat"]
+[ext_resource type="Resource" path="res://terrain/default_noise.tres" id="7_noise"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -34,6 +35,7 @@ SunRotationDegrees = Vector3(170, 80, 0)
 [node name="TerrainWorld" type="Node3D" parent="." unique_id=812695684]
 script = ExtResource("2_terrain")
 TerrainMaterial = ExtResource("6_terrain_mat")
+Noise = ExtResource("7_noise")
 
 [node name="Player" parent="." instance=ExtResource("5_player")]
 

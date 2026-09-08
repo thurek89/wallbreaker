@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="TerrainNoise" format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/TerrainNoise.cs" id="1_noise"]
+
+[sub_resource type="FastNoiseLite" id="Caverns"]
+noise_type = 1
+seed = 17
+frequency = 0.07
+fractal_type = 1
+fractal_octaves = 2
+fractal_lacunarity = 2.0
+fractal_gain = 0.4
+
+[sub_resource type="FastNoiseLite" id="Tunnels"]
+noise_type = 1
+seed = 36
+frequency = 0.055
+fractal_type = 1
+fractal_octaves = 2
+fractal_lacunarity = 2.0
+fractal_gain = 0.35
+
+[sub_resource type="FastNoiseLite" id="Warp"]
+noise_type = 1
+seed = 58
+frequency = 0.04
+fractal_type = 1
+fractal_octaves = 1
+fractal_lacunarity = 2.0
+fractal_gain = 0.35
+
+[resource]
+script = ExtResource("1_noise")
+BandMinY = 0.0
+CrustHeight = 5.0
+FloorThickness = 0.45
+Caverns = SubResource("Caverns")
+Amplitude = 0.9
+Threshold = 0.1
+YScale = 0.85
+Tunnels = SubResource("Tunnels")
+TunnelWidth = 0.38
+Warp = SubResource("Warp")
+WarpStrength = 0.14
+AirPadding = 0.08

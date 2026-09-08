@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://c8terrainpreview"]
+
+[ext_resource type="Script" path="res://scripts/debug/TerrainPreview.cs" id="1_preview"]
+[ext_resource type="Script" path="res://scripts/CameraController.cs" id="2_cam"]
+[ext_resource type="Script" path="res://scripts/SunLight.cs" id="3_sun"]
+[ext_resource type="Resource" path="res://terrain/default_noise.tres" id="4_noise"]
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 1
+background_color = Color(0.62, 0.78, 0.92, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.62, 0.72, 1)
+ambient_light_energy = 0.16
+tonemap_mode = 2
+
+[node name="TerrainPreviewWorld" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_preview")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.173648, -0.564863, 0.806723, 0, 0.819152, 0.573577, -0.984808, -0.099602, 0.142212, 0, 0, 0)
+light_energy = 1.55
+shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.0
+directional_shadow_mode = 0
+directional_shadow_max_distance = 80.0
+script = ExtResource("3_sun")
+SunRotationDegrees = Vector3(170, 80, 0)
+MaxShadowDistance = 80.0
+
+[node name="TerrainPreview" type="Node3D" parent="."]
+script = ExtResource("1_preview")
+Noise = ExtResource("4_noise")
+
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
+script = ExtResource("2_cam")
+OrthoSize = 36.0
+CameraDistance = 50.0
+CameraFar = 150.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+projection = 1
+current = true
+size = 36.0
+near = 5.0
+far = 150.0

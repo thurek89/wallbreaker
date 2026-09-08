@@ -6,6 +6,7 @@ public partial class CameraController : Node3D
 {
     [Export] public float OrthoSize { get; set; } = 12f;
     [Export] public float CameraDistance { get; set; } = 40f;
+    [Export] public float CameraFar { get; set; } = 80f;
     [Export] public float FollowLerp { get; set; } = 12f;
 
     private Camera3D _camera = null!;
@@ -20,7 +21,7 @@ public partial class CameraController : Node3D
         _camera.Projection = Camera3D.ProjectionType.Orthogonal;
         _camera.Size = OrthoSize;
         _camera.Near = 5f;
-        _camera.Far = 80f;
+        _camera.Far = CameraFar;
         _camera.Current = true;
         _camera.RotationDegrees = new Vector3(-pitch, 45f, 0f);
         _camera.Position = _camera.Basis * new Vector3(0f, 0f, CameraDistance);
