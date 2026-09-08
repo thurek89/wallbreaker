@@ -160,7 +160,10 @@ public partial class WeaponController : Node3D
             return false;
         }
 
-        if (_terrain != null && _terrain.Raycast(from, dir, 500f, out point, out Vector3 _))
+        float headY = GetParent() is Node3D player
+            ? player.GlobalPosition.Y + 1.7f
+            : (_terrain?.FloorTop ?? 0.45f) + 1.7f;
+        if (_terrain != null && _terrain.RaycastFromView(from, dir, 500f, headY, out point, out Vector3 _))
         {
             return true;
         }

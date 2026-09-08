@@ -67,7 +67,7 @@ public partial class TerrainChunk : Node3D
         RemeshAll();
     }
 
-    public bool SubtractColumn(Vector3 center, float radius)
+    public bool SubtractSphere(Vector3 center, float radius)
     {
         if (_sdf.Length == 0 || radius <= 0f || _sampler == null)
         {
@@ -75,12 +75,9 @@ public partial class TerrainChunk : Node3D
         }
 
         float pad = _voxelSize;
-        float y0World = _sampler.FloorTop - pad;
-        float y1World = _sampler.CrustHeight + pad;
-        Vector3 min = (new Vector3(center.X - radius - pad, y0World, center.Z - radius - pad) - _gridOrigin)
-            / _voxelSize;
-        Vector3 max = (new Vector3(center.X + radius + pad, y1World, center.Z + radius + pad) - _gridOrigin)
-            / _voxelSize;
+        float reach = radius + pad;
+        Vector3 min = (center - new Vector3(reach, reach, reach) - _gridOrigin) / _voxelSize;
+        Vector3 max = (center + new Vector3(reach, reach, reach) - _gridOrigin) / _voxelSize;
         int x0 = Mathf.Clamp(Mathf.FloorToInt(min.X), 0, _nx - 1);
         int y0 = Mathf.Clamp(Mathf.FloorToInt(min.Y), 0, _ny - 1);
         int z0 = Mathf.Clamp(Mathf.FloorToInt(min.Z), 0, _nz - 1);
@@ -88,7 +85,6 @@ public partial class TerrainChunk : Node3D
         int y1 = Mathf.Clamp(Mathf.CeilToInt(max.Y), 0, _ny - 1);
         int z1 = Mathf.Clamp(Mathf.CeilToInt(max.Z), 0, _nz - 1);
 
-        float floorTop = _sampler.FloorTop;
         bool changed = false;
         for (int z = z0; z <= z1; z++)
         {
@@ -98,16 +94,8 @@ public partial class TerrainChunk : Node3D
                 {
                     Vector3 world = _gridOrigin + new Vector3(x, y, z) * _voxelSize;
                     int i = x + _nx * (y + _ny * z);
-                    float carved = _sdf[i];
-                    if (world.Y > floorTop)
-                    {
-                        float dx = world.X - center.X;
-                        float dz = world.Z - center.Z;
-                        float cylinder = Mathf.Sqrt(dx * dx + dz * dz) - radius;
-                        carved = Mathf.Max(carved, -cylinder);
-                    }
-
-                    carved = _sampler.PreserveFloor(carved, world);
+                    float sphere = world.DistanceTo(center) - radius;
+                    float carved = _sampler.PreserveFloor(Mathf.Max(_sdf[i], -sphere), world);
                     if (Mathf.Abs(carved - _sdf[i]) > 1e-5f)
                     {
                         _sdf[i] = carved;
@@ -127,11 +115,10 @@ public partial class TerrainChunk : Node3D
 
     public bool OverlapsBrush(Vector3 center, float radius)
     {
-        float height = _sampler?.CrustHeight ?? Bounds.Size.Y;
-        var column = new Aabb(
-            new Vector3(center.X - radius, 0f, center.Z - radius),
-            new Vector3(radius * 2f, height, radius * 2f));
-        return Bounds.Intersects(column);
+        var brush = new Aabb(
+            center - new Vector3(radius, radius, radius),
+            new Vector3(radius * 2f, radius * 2f, radius * 2f));
+        return Bounds.Intersects(brush);
     }
 
     public void RemeshDirty()

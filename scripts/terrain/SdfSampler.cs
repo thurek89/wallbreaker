@@ -4,8 +4,7 @@ namespace Wallbreaker;
 
 /// <summary>
 /// World-space signed distance for occupied earth from y=0 to y=CrustHeight.
-/// The top of the slab is the "ceiling": it means this column is still occupied.
-/// Digging clears that column down to an immortal floor; the ceiling there is removed.
+/// Carves subtract 3D volumes from the slab; the walkable floor band stays solid.
 /// Negative values are solid.
 /// </summary>
 public sealed class SdfSampler
@@ -55,8 +54,7 @@ public sealed class SdfSampler
     }
 
     /// <summary>
-    /// Keeps the walkable floor after a carve. The ceiling is not restored:
-    /// clearing a column means that spot is no longer occupied.
+    /// Keeps the walkable floor after a carve. Removed crust is not restored.
     /// </summary>
     public float PreserveFloor(float distance, Vector3 p)
     {

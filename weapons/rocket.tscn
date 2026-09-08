@@ -21,7 +21,8 @@ rings = 4
 script = ExtResource("1_rocket")
 Speed = 11.0
 MaxLifetime = 4.0
-BlastRadius = 1.0
+BlastRadius = 1.2
+BlastDepthBias = 0.5
 ExplosionScene = ExtResource("2_fx")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]

@@ -133,11 +133,8 @@ public partial class DebugDigController : Node3D
             return false;
         }
 
-        if (!_terrain.Raycast(from, dir, 500f, out point, out Vector3 _))
-        {
-            return false;
-        }
-
-        return true;
+        Node3D? player = GetParent()?.GetNodeOrNull<Node3D>("Player");
+        float headY = (player?.GlobalPosition.Y ?? _terrain.FloorTop) + 1.7f;
+        return _terrain.RaycastFromView(from, dir, 500f, headY, out point, out Vector3 _);
     }
 }

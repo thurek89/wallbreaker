@@ -51,6 +51,15 @@ surface_material_override/0 = SubResource("StandardMaterial3D_player")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_player")
 
+[node name="FillLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+light_energy = 0.45
+light_color = Color(1, 0.95, 0.85, 1)
+light_specular = 0.15
+omni_range = 5.0
+omni_attenuation = 1.5
+shadow_enabled = false
+
 [node name="WeaponMount" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.95, 0)
 script = ExtResource("2_weapon")
