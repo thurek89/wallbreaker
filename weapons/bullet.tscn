@@ -19,6 +19,8 @@ rings = 6
 script = ExtResource("1_bullet")
 Speed = 22.0
 MaxLifetime = 2.2
+ChipRadius = 0.16
+ChipDepthBias = 0.45
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
 cast_shadow = 0
