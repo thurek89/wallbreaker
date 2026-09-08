@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://d4es1kikx8tae" path="res://scripts/CameraController.cs" id="1_cam"]
 [ext_resource type="Script" uid="uid://d3ohpftqp28sg" path="res://scripts/terrain/TerrainWorld.cs" id="2_terrain"]
+[ext_resource type="Script" uid="uid://dkes3lvjugcc6" path="res://scripts/DebugDigController.cs" id="3_dig"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -35,6 +36,9 @@ surface_material_override/0 = SubResource("StandardMaterial3D_floor")
 
 [node name="TerrainWorld" type="Node3D" parent="."]
 script = ExtResource("2_terrain")
+
+[node name="DebugDig" type="Node3D" parent="."]
+script = ExtResource("3_dig")
 
 [node name="CameraRig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)

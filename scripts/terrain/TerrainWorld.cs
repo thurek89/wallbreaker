@@ -37,6 +37,45 @@ public partial class TerrainWorld : Node3D
         return _bounds;
     }
 
+    public void Carve(Vector3 worldPoint, float radius)
+    {
+        foreach (TerrainChunk chunk in _chunks.Values)
+        {
+            if (chunk.OverlapsBrush(worldPoint, radius))
+            {
+                chunk.SubtractSphere(worldPoint, radius);
+            }
+        }
+    }
+
+    public void CommitCarve()
+    {
+        foreach (TerrainChunk chunk in _chunks.Values)
+        {
+            chunk.RemeshDirty();
+        }
+    }
+
+    public bool Raycast(Vector3 origin, Vector3 dir, float maxDistance, out Vector3 hit, out Vector3 normal)
+    {
+        hit = default;
+        normal = Vector3.Up;
+        float best = maxDistance;
+        bool found = false;
+        foreach (TerrainChunk chunk in _chunks.Values)
+        {
+            if (chunk.Raycast(origin, dir, best, out Vector3 candidate, out Vector3 n, out float t) && t < best)
+            {
+                best = t;
+                hit = candidate;
+                normal = n;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
     public void EnsureChunk(int ix, int iz)
     {
         var key = (ix, iz);
