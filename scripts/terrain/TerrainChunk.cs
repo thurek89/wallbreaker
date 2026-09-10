@@ -26,6 +26,7 @@ public partial class TerrainChunk : Node3D
     private float _voxelSize;
     private Vector3 _gridOrigin;
     private SdfSampler? _sampler;
+    private TypeSampler _types = null!;
     private Material? _material;
     private Brick[] _bricks = [];
     private StaticBody3D _body = null!;
@@ -45,12 +46,14 @@ public partial class TerrainChunk : Node3D
         int cellsXz,
         int cellsY,
         SdfSampler sampler,
+        TypeSampler types,
         Material material,
         ChunkVolume? restored = null)
     {
         ChunkX = chunkX;
         ChunkZ = chunkZ;
         _sampler = sampler;
+        _types = types;
         _material = material;
         _volume = restored ?? ChunkVolume.CreateFilled(chunkX, chunkZ, chunkSize, cellsXz, cellsY, sampler);
         BindVolume(_volume);
@@ -200,10 +203,17 @@ public partial class TerrainChunk : Node3D
             normals[i + 2] = n;
         }
 
+        var types = new Color[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            types[i] = _types.Sample(vertices[i]);
+        }
+
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
         arrays[(int)Mesh.ArrayType.Vertex] = vertices;
         arrays[(int)Mesh.ArrayType.Normal] = normals;
+        arrays[(int)Mesh.ArrayType.Color] = types;
 
         var mesh = brick.Mesh.Mesh as ArrayMesh ?? new ArrayMesh();
         if (mesh.GetSurfaceCount() > 0)

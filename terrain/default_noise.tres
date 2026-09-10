@@ -1,45 +1,46 @@
-[gd_resource type="Resource" script_class="TerrainNoise" format=3]
+[gd_resource type="Resource" script_class="TerrainNoise" format=3 uid="uid://8q5jipukfcp"]
 
-[ext_resource type="Script" path="res://scripts/terrain/TerrainNoise.cs" id="1_noise"]
+[ext_resource type="Script" uid="uid://bpowvbrjwcyd" path="res://scripts/terrain/TerrainNoise.cs" id="1_noise"]
 
 [sub_resource type="FastNoiseLite" id="Caverns"]
-noise_type = 1
 seed = 17
 frequency = 0.07
-fractal_type = 1
 fractal_octaves = 2
-fractal_lacunarity = 2.0
 fractal_gain = 0.4
 
+[sub_resource type="FastNoiseLite" id="IceVeins"]
+noise_type = 2
+seed = 104
+frequency = 0.0731
+fractal_type = 2
+fractal_octaves = 3
+fractal_gain = 0.4
+fractal_weighted_strength = 0.25
+fractal_ping_pong_strength = 4.0
+
 [sub_resource type="FastNoiseLite" id="Tunnels"]
-noise_type = 1
 seed = 36
 frequency = 0.055
-fractal_type = 1
 fractal_octaves = 2
-fractal_lacunarity = 2.0
 fractal_gain = 0.35
 
+[sub_resource type="FastNoiseLite" id="TypeBands"]
+frequency = 0.0096
+fractal_type = 2
+fractal_octaves = 2
+fractal_gain = 0.45
+
 [sub_resource type="FastNoiseLite" id="Warp"]
-noise_type = 1
 seed = 58
 frequency = 0.04
-fractal_type = 1
 fractal_octaves = 1
-fractal_lacunarity = 2.0
 fractal_gain = 0.35
 
 [resource]
 script = ExtResource("1_noise")
-BandMinY = 0.0
-CrustHeight = 5.0
-FloorThickness = 0.45
 Caverns = SubResource("Caverns")
-Amplitude = 0.9
-Threshold = 0.1
-YScale = 0.85
 Tunnels = SubResource("Tunnels")
-TunnelWidth = 0.38
 Warp = SubResource("Warp")
-WarpStrength = 0.14
-AirPadding = 0.08
+TypeBands = SubResource("TypeBands")
+IceVeins = SubResource("IceVeins")
+IceThreshold = 0.5

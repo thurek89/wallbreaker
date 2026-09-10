@@ -28,7 +28,10 @@ void fragment() {
 		}
 	}
 
-	ALBEDO = terrain_albedo(world_pos, normalize(world_normal), 0.0);
-	ROUGHNESS = roughness_v;
+	vec4 weights = terrain_type_weights(COLOR);
+	vec3 shaded_normal;
+	ALBEDO = terrain_surface(world_pos, normalize(world_normal), weights, 0.0, shaded_normal);
+	NORMAL = normalize((VIEW_MATRIX * vec4(shaded_normal, 0.0)).xyz);
+	ROUGHNESS = terrain_roughness(weights);
 	METALLIC = 0.0;
 }

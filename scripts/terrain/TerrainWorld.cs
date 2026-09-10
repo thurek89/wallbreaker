@@ -23,6 +23,7 @@ public partial class TerrainWorld : Node3D
     private readonly Dictionary<(int X, int Z), ChunkVolume> _cache = [];
     private readonly List<(int X, int Z)> _unloadScratch = [];
     private SdfSampler _sampler = null!;
+    private TypeSampler _types = null!;
     private ShaderMaterial _material = null!;
     private Aabb _bounds;
     private Node3D? _player;
@@ -34,7 +35,9 @@ public partial class TerrainWorld : Node3D
 
     public override void _Ready()
     {
-        _sampler = new SdfSampler(ResolveNoise());
+        TerrainNoise noise = ResolveNoise();
+        _sampler = new SdfSampler(noise);
+        _types = new TypeSampler(noise);
         _material = ResolveTerrainMaterial();
         _bounds = new Aabb(
             new Vector3(0f, _sampler.BandMinY, 0f),
@@ -82,6 +85,11 @@ public partial class TerrainWorld : Node3D
     public Aabb GetBounds()
     {
         return _bounds;
+    }
+
+    public TerrainType GetTerrainType(Vector3 worldPoint)
+    {
+        return _types.Dominant(worldPoint);
     }
 
     public void Carve(Vector3 worldPoint, float radius)
@@ -159,7 +167,7 @@ public partial class TerrainWorld : Node3D
             Name = $"Chunk_{ix}_{iz}"
         };
         AddChild(chunk);
-        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _material, restored);
+        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _types, _material, restored);
         StitchWithNeighbors(chunk);
         chunk.RebuildMeshes();
         _chunks[key] = chunk;
@@ -345,7 +353,8 @@ public partial class TerrainWorld : Node3D
 
     private ShaderMaterial ResolveTerrainMaterial()
     {
-        ShaderMaterial material = TerrainMaterial ?? new ShaderMaterial();
+        ShaderMaterial? assigned = TerrainMaterial;
+        ShaderMaterial material = assigned ?? new ShaderMaterial();
         if (material.Shader == null)
         {
             material.Shader = GD.Load<Shader>("res://shaders/terrain_cutaway.gdshader");
@@ -357,6 +366,11 @@ public partial class TerrainWorld : Node3D
             {
                 Shader = GD.Load<Shader>("res://shaders/terrain_cutaway_ghost.gdshader")
             };
+        }
+
+        if (assigned == null)
+        {
+            TerrainTextures.ApplyDefaults(material);
         }
 
         return material;
@@ -377,22 +391,18 @@ public partial class TerrainWorld : Node3D
             return;
         }
 
-        ApplyCutaway(_material, center, axis.Normalized(), feet.Y);
-        if (_material.NextPass is ShaderMaterial ghost)
-        {
-            ApplyCutaway(ghost, center, axis.Normalized(), feet.Y);
-        }
+        ApplyCutaway(center, axis.Normalized(), feet.Y);
     }
 
-    private void ApplyCutaway(ShaderMaterial material, Vector3 center, Vector3 axis, float floorY)
+    private void ApplyCutaway(Vector3 center, Vector3 axis, float floorY)
     {
-        material.SetShaderParameter("cut_center", center);
-        material.SetShaderParameter("cut_axis", axis);
-        material.SetShaderParameter("cut_floor_y", floorY);
-        material.SetShaderParameter("cut_radius", CutRadius);
-        material.SetShaderParameter("cut_softness", CutSoftness);
-        material.SetShaderParameter("cut_clear_radius", CutClearRadius);
-        material.SetShaderParameter("cut_clear_softness", CutClearSoftness);
+        RenderingServer.GlobalShaderParameterSet("cut_center", center);
+        RenderingServer.GlobalShaderParameterSet("cut_axis", axis);
+        RenderingServer.GlobalShaderParameterSet("cut_floor_y", floorY);
+        RenderingServer.GlobalShaderParameterSet("cut_radius", CutRadius);
+        RenderingServer.GlobalShaderParameterSet("cut_softness", CutSoftness);
+        RenderingServer.GlobalShaderParameterSet("cut_clear_radius", CutClearRadius);
+        RenderingServer.GlobalShaderParameterSet("cut_clear_softness", CutClearSoftness);
     }
 
     private void AddWalkFloor()

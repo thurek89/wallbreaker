@@ -1,29 +1,41 @@
 [gd_resource type="ShaderMaterial" format=3 uid="uid://bihf8ylqrn21i"]
 
 [ext_resource type="Shader" uid="uid://dwjhg7m2h0wxj" path="res://shaders/terrain_cutaway.gdshader" id="1_shader"]
-[ext_resource type="Shader" path="res://shaders/terrain_cutaway_ghost.gdshader" id="2_ghost"]
+[ext_resource type="Shader" uid="uid://fqu2u0oo7dbg" path="res://shaders/terrain_cutaway_ghost.gdshader" id="2_ghost"]
+[ext_resource type="Texture2D" path="res://texture/stone_albedo.png" id="3_stone_a"]
+[ext_resource type="Texture2D" path="res://texture/stone_normal.png" id="4_stone_n"]
+[ext_resource type="Texture2D" path="res://texture/dirt_albedo.png" id="5_dirt_a"]
+[ext_resource type="Texture2D" path="res://texture/dirt_normal.png" id="6_dirt_n"]
+[ext_resource type="Texture2D" path="res://texture/ice_albedo.png" id="7_ice_a"]
+[ext_resource type="Texture2D" path="res://texture/ice_normal.png" id="8_ice_n"]
+[ext_resource type="Texture2D" path="res://texture/sand_albedo.png" id="9_sand_a"]
+[ext_resource type="Texture2D" path="res://texture/sand_normal.png" id="10_sand_n"]
 
 [sub_resource type="ShaderMaterial" id="GhostPass"]
 render_priority = 0
 shader = ExtResource("2_ghost")
-shader_parameter/cut_center = Vector3(0, 0, 0)
-shader_parameter/cut_axis = Vector3(0, 0, -1)
-shader_parameter/cut_radius = 8.0
-shader_parameter/cut_softness = 1.10000001639132
-shader_parameter/cut_floor_y = 0.0
-shader_parameter/cut_clear_radius = 2.0
-shader_parameter/cut_clear_softness = 0.5
 shader_parameter/silhouette_color = Color(0.07, 0.08, 0.11, 1)
 shader_parameter/silhouette_alpha = 0.48
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_shader")
 next_pass = SubResource("GhostPass")
-shader_parameter/floor_albedo = Color(0.4, 0.32, 0.22, 1)
-shader_parameter/wall_albedo = Color(0.64, 0.56, 0.48, 1)
-shader_parameter/ceiling_albedo = Color(0.26, 0.23, 0.22, 1)
-shader_parameter/roughness_v = 0.85
+shader = ExtResource("1_shader")
+shader_parameter/stone_albedo = ExtResource("3_stone_a")
+shader_parameter/stone_normal = ExtResource("4_stone_n")
+shader_parameter/dirt_albedo = ExtResource("5_dirt_a")
+shader_parameter/dirt_normal = ExtResource("6_dirt_n")
+shader_parameter/ice_albedo = ExtResource("7_ice_a")
+shader_parameter/ice_normal = ExtResource("8_ice_n")
+shader_parameter/sand_albedo = ExtResource("9_sand_a")
+shader_parameter/sand_normal = ExtResource("10_sand_n")
+shader_parameter/type_texture_scale = 0.5
+shader_parameter/triplanar_sharpness = 4.0
+shader_parameter/normal_strength = 0.7
+shader_parameter/type_roughness = Vector4(0.85, 0.92, 0.25, 0.95)
+shader_parameter/floor_tint = Color(1, 0.98, 0.92, 1)
+shader_parameter/wall_tint = Color(0.92, 0.9, 0.88, 1)
+shader_parameter/ceiling_tint = Color(0.62, 0.6, 0.62, 1)
 shader_parameter/slope_start = 0.32
 shader_parameter/slope_end = 0.75
 shader_parameter/strata_freq = 14.0
@@ -36,10 +48,3 @@ shader_parameter/height_tint_start = 1.0
 shader_parameter/height_tint_end = 2.4
 shader_parameter/height_tint_color = Color(0.72, 0.8, 0.94, 1)
 shader_parameter/height_tint_strength = 0.4
-shader_parameter/cut_center = Vector3(0, 0, 0)
-shader_parameter/cut_axis = Vector3(0, 0, -1)
-shader_parameter/cut_radius = 8.0
-shader_parameter/cut_softness = 1.10000001639132
-shader_parameter/cut_floor_y = 0.0
-shader_parameter/cut_clear_radius = 2.0
-shader_parameter/cut_clear_softness = 0.5

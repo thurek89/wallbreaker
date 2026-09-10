@@ -1,9 +1,9 @@
-[gd_scene format=3 uid="uid://c8terrainpreview"]
+[gd_scene format=3 uid="uid://bihf8yyndan5g"]
 
-[ext_resource type="Script" path="res://scripts/debug/TerrainPreview.cs" id="1_preview"]
-[ext_resource type="Script" path="res://scripts/CameraController.cs" id="2_cam"]
-[ext_resource type="Script" path="res://scripts/SunLight.cs" id="3_sun"]
-[ext_resource type="Resource" path="res://terrain/default_noise.tres" id="4_noise"]
+[ext_resource type="Script" uid="uid://b8kbuq0tdgbrt" path="res://scripts/debug/TerrainPreview.cs" id="1_preview"]
+[ext_resource type="Script" uid="uid://d4es1kikx8tae" path="res://scripts/CameraController.cs" id="2_cam"]
+[ext_resource type="Script" uid="uid://cjghqkpyw7mm2" path="res://scripts/SunLight.cs" id="3_sun"]
+[ext_resource type="Resource" uid="uid://8q5jipukfcp" path="res://terrain/default_noise.tres" id="4_noise"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -17,16 +17,15 @@ fog_light_color = Color(0.62, 0.74, 0.86, 1)
 fog_density = 0.002
 fog_aerial_perspective = 0.25
 fog_sky_affect = 0.2
-fog_height = 0.0
 fog_height_density = 0.05
 
-[node name="TerrainPreviewWorld" type="Node3D"]
+[node name="TerrainPreviewWorld" type="Node3D" unique_id=810567023]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1237814443]
 environment = SubResource("Environment_preview")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.173648, -0.564863, 0.806723, 0, 0.819152, 0.573577, -0.984808, -0.099602, 0.142212, 0, 0, 0)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1533130012]
+transform = Transform3D(0.7304469, 0.2885872, -0.6190031, 0.3522249, -0.9356888, -0.020591542, -0.5851368, -0.20298727, -0.78511846, 0, 5.081993, 0)
 light_energy = 1.55
 shadow_enabled = true
 shadow_bias = 0.04
@@ -37,18 +36,19 @@ script = ExtResource("3_sun")
 SunRotationDegrees = Vector3(170, 80, 0)
 MaxShadowDistance = 80.0
 
-[node name="TerrainPreview" type="Node3D" parent="."]
+[node name="TerrainPreview" type="Node3D" parent="." unique_id=349553017]
 script = ExtResource("1_preview")
 Noise = ExtResource("4_noise")
+ClipFront = false
 
-[node name="CameraRig" type="Node3D" parent="."]
+[node name="CameraRig" type="Node3D" parent="." unique_id=1259241526]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
 script = ExtResource("2_cam")
 OrthoSize = 36.0
 CameraDistance = 50.0
 CameraFar = 150.0
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1323595438]
 projection = 1
 current = true
 size = 36.0

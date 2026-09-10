@@ -26,6 +26,7 @@ public partial class TerrainPreview : Node3D
 
     private readonly Dictionary<(int X, int Z), TerrainChunk> _chunks = [];
     private SdfSampler _sampler = null!;
+    private TypeSampler _types = null!;
     private ShaderMaterial _material = null!;
     private MeshInstance3D _grid = null!;
     private Node3D? _cameraRig;
@@ -76,6 +77,7 @@ public partial class TerrainPreview : Node3D
 
         TerrainNoise noise = ResolveNoise();
         _sampler = new SdfSampler(noise);
+        _types = new TypeSampler(noise);
 
         EnsureMaterial();
         for (int iz = -Extent; iz <= Extent; iz++)
@@ -103,7 +105,7 @@ public partial class TerrainPreview : Node3D
 
         var chunk = new TerrainChunk { Name = $"Chunk_{ix}_{iz}" };
         AddChild(chunk);
-        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _material);
+        chunk.Build(ix, iz, ChunkSize, CellsXz, CellsY, _sampler, _types, _material);
         StitchWithNeighbors(chunk);
         chunk.RebuildMeshes();
         _chunks[key] = chunk;
@@ -184,10 +186,7 @@ public partial class TerrainPreview : Node3D
         {
             Shader = GD.Load<Shader>("res://shaders/terrain_preview.gdshader")
         };
-        _material.SetShaderParameter("floor_albedo", new Color(0.40f, 0.32f, 0.22f));
-        _material.SetShaderParameter("wall_albedo", new Color(0.64f, 0.56f, 0.48f));
-        _material.SetShaderParameter("ceiling_albedo", new Color(0.26f, 0.23f, 0.22f));
-        _material.SetShaderParameter("roughness_v", 0.85f);
+        TerrainTextures.ApplyDefaults(_material);
     }
 
     private void EnsureGrid()
